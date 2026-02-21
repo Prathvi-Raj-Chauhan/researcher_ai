@@ -14,10 +14,11 @@ def build_context(chunks: list) -> str:
         context += chunk['content'] + "\n\n"
     return context.strip()
 
-def synthesize(query: str, k: int = 5) -> dict:
-    
+def synthesize(query: str, session_id: str, k: int = 5) -> dict:
     # Step 1 - retrieve relevant chunks
-    chunks = search(query, k=k)
+    chunks = search(query, session_id=session_id, k=k)
+    
+
     
     if not chunks:
         return {
