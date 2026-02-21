@@ -1,3 +1,6 @@
 test.py
-/chroma_db/
-/__pycache__/
+ingestion/__pycache__/
+storage/__pycache__/
+query/__pycache__/
+.env
+test_query.py
