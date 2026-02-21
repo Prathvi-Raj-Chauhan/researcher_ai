@@ -2,6 +2,7 @@ import pdfplumber
 import trafilatura
 import json
 from pathlib import Path
+from langchain_core.documents import Document
 
 def load_pdf(file_path: str) -> str:
     text = ""
@@ -26,21 +27,22 @@ def load_json(file_path: str) -> str:
         data = json.load(f)
     return json.dumps(data, indent=2)
 
-def load_document(source: str) -> str:
-    """
-    Auto-detects input type and returns plain text.
-    source can be a file path or a URL.
-    """
+def load_document(source: str) -> list[Document]:
+    
     if source.startswith("http://") or source.startswith("https://"):
-        return load_url(source)
-    
-    ext = Path(source).suffix.lower()
-    
-    if ext == ".pdf":
-        return load_pdf(source)
-    elif ext == ".json":
-        return load_json(source)
-    elif ext in (".txt", ".md", ".markdown"):
-        return load_text(source)
+        text = load_url(source)
     else:
-        raise ValueError(f"Unsupported file type: {ext}")
+        ext = Path(source).suffix.lower()
+        if ext == ".pdf":
+            text = load_pdf(source)
+        elif ext == ".json":
+            text = load_json(source)
+        elif ext in (".txt", ".md", ".markdown"):
+            text = load_text(source)
+        else:
+            raise ValueError(f"Unsupported file type: {ext}")
+
+    if not text:
+        raise ValueError(f"Could not extract text from {source}")
+
+    return [Document(page_content=text, metadata={"source": source})]
