@@ -6,44 +6,30 @@ PERSIST_DIRECTORY = "chroma_db"
 
 embedding_model = BGEEmbeddings()
 
-# def create_vector_store(chunks) -> Chroma:
-#     print("Creating vector store...")
-#     vectorstore = Chroma.from_documents(
-#         documents=chunks,
-#         embedding=embedding_model,
-#         persist_directory=PERSIST_DIRECTORY,
-#         collection_metadata={"hnsw:space": "cosine"}
-#     )
-#     print(f"Vector store saved to {PERSIST_DIRECTORY}")
-#     return vectorstore
+def _collection_name(userId: str, projectId: str) -> str:
+    return f"{userId}__{projectId}"
 
-# def load_vector_store() -> Chroma:
-#     """Load existing vector store from disk"""
-#     return Chroma(
-#         persist_directory=PERSIST_DIRECTORY,
-#         embedding_function=embedding_model
-#     )
-def create_vector_store(chunks, session_id: str) -> Chroma:
+def create_vector_store(chunks, userId: str, projectId: str) -> Chroma:
     vectorstore = Chroma.from_documents(
         documents=chunks,
         embedding=embedding_model,
         persist_directory=PERSIST_DIRECTORY,
-        collection_name=session_id,
+        collection_name=_collection_name(userId, projectId),
         collection_metadata={"hnsw:space": "cosine"}
     )
     return vectorstore
 
-def load_vector_store(session_id: str) -> Chroma:
+def load_vector_store(userId: str, projectId: str) -> Chroma:
     return Chroma(
         persist_directory=PERSIST_DIRECTORY,
         embedding_function=embedding_model,
-        collection_name=session_id
+        collection_name=_collection_name(userId, projectId)
     )
 
-def delete_session(session_id: str) -> bool:
-    """Delete a specific session's collection"""
+
+def delete_vector_store(userId: str, projectId: str) -> bool:
     try:
-        vectorstore = load_vector_store(session_id)
+        vectorstore = load_vector_store(userId, projectId)
         vectorstore.delete_collection()
         return True
     except Exception:
