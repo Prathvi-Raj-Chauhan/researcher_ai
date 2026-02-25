@@ -1,10 +1,14 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PAGES/chatPage.dart';
+import 'package:research_helper/PROVIDER/project_list_provider.dart';
 import 'package:research_helper/SERVICES/apiServices.dart';
 import 'package:research_helper/SERVICES/storage_services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,7 +21,7 @@ class _HomePageState extends State<HomePage> {
   File? chosenPdf;
   File? chosenText;
   String? chosenUrl;
-  String sourceType = ""; // "pdf", "txt", "url"
+  String sourceType = "";
 
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -60,6 +64,7 @@ class _HomePageState extends State<HomePage> {
   void _submitResearch() async {
     try {
       // 1. create new project
+
       Project newProj = await StorageServices.createNewProject(
         _nameController.text,
       );
@@ -80,6 +85,23 @@ class _HomePageState extends State<HomePage> {
     } catch (e) {
       debugPrint(e.toString());
     }
+  }
+
+  Future<String> getUserId() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String userId = prefs.getString('userId')!;
+    return userId;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    loadUserAndFetchProject();
+  }
+
+  Future<void> loadUserAndFetchProject() async {
+    String userId = await getUserId();
+    context.read<ProjectListProvider>().fetchAllProjects(userId);
   }
 
   @override
@@ -268,12 +290,69 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
             Expanded(
-              child: Center(
-                child: Text(
-                  'No research yet.\nTap + to start.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 16),
-                ),
+              child: Consumer<ProjectListProvider>(
+                builder: (context, plp, _) {
+                  if (plp.isLoading) {
+                    return Center(child: CircularProgressIndicator());
+                  }
+                  if (plp.projectList.length == 0) {
+                    return Center(
+                      child: Text(
+                        'No research yet\n Tap + to start',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    itemCount: plp.projectList.length,
+                    itemBuilder: (context, index) {
+                      Project currProj = plp.projectList[index];
+                      return Container(
+                        height: 80,
+                        decoration: BoxDecoration(
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.6),
+                              offset: Offset(4, 4),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                            BoxShadow(
+                              color: Colors.white.withOpacity(0.05),
+                              offset: Offset(-2, -2),
+                              blurRadius: 6,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                          color: const Color.fromARGB(255, 47, 46, 46),
+                          border: BoxBorder.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        padding: EdgeInsets.all(12),
+                        child: Center(
+                          child: ListTile(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                    ChatPage(projectId: currProj.id),
+                              ),
+                            ),
+                            leading: Text(
+                              currProj.name,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                            trailing: Text(currProj.createdAt.toString()),
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

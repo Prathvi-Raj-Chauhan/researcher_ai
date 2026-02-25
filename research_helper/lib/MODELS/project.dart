@@ -23,6 +23,9 @@ class Project extends HiveObject {
   @HiveField(5)
   DateTime createdAt;
 
+  @HiveField(6)
+  String userId;
+
   Project({
     required this.id,
     required this.name,
@@ -30,5 +33,6 @@ class Project extends HiveObject {
     this.summary = "",
     this.messages = const [],
     required this.createdAt,
+    required this.userId,
   });
 }

@@ -23,13 +23,14 @@ class ProjectAdapter extends TypeAdapter<Project> {
       summary: fields[3] as String,
       messages: (fields[4] as List).cast<Message>(),
       createdAt: fields[5] as DateTime,
+      userId: fields[6] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, Project obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class ProjectAdapter extends TypeAdapter<Project> {
       ..writeByte(4)
       ..write(obj.messages)
       ..writeByte(5)
-      ..write(obj.createdAt);
+      ..write(obj.createdAt)
+      ..writeByte(6)
+      ..write(obj.userId);
   }
 
   @override
