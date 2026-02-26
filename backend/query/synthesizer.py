@@ -14,11 +14,43 @@ def build_context(chunks: list) -> str:
         context += chunk['content'] + "\n\n"
     return context.strip()
 
-def synthesize(query: str, session_id: str, k: int = 5) -> dict:
-    # Step 1 - retrieve relevant chunks
-    chunks = search(query, session_id=session_id, k=k)
-    
+def build_history_string(history: list[dict], max_messages: int = 5, max_chars: int = 2000) -> str:
 
+    if not history:
+        return ""
+    # Normalize roles and take last N
+    last = history[-max_messages:]
+    parts = []
+    for item in last:
+        role = item.get("role").lower()
+        content = str(item.get("content", "")).strip()
+        # map role to readable label
+        if role in ("system",):
+            label = "System"
+        elif role in ("assistant", "bot", "ai"):
+            label = "Assistant"
+        else:
+            label = "User"
+        parts.append(f"[{label}]: {content}")
+    hist_str = "\n".join(parts)
+    # Truncate safely (char-level) if too long
+    if len(hist_str) > max_chars:
+        hist_str = hist_str[-max_chars:]  # keep the last part of conversation
+        hist_str = "..." + hist_str  # indicate truncation
+    return hist_str
+
+
+def get_collection_name(userId: str, projectId: str) -> str:
+    return f"{userId}__{projectId}"
+
+
+def synthesize(query: str, projectId: str, userId: str, history: list[dict], k: int = 5) -> dict:
+    # Step 1 - retrieve relevant chunks
+    collectionName = get_collection_name(userId, projectId)
+    print("searching in -> ")
+    print(collectionName)
+    chunks = search(projectId, query, userId, k=k)
+    
     
     if not chunks:
         return {
@@ -29,13 +61,21 @@ def synthesize(query: str, session_id: str, k: int = 5) -> dict:
     
     # Step 2 - build context from chunks
     context = build_context(chunks)
+
+    # Step 2.5 - build context from chunks
+    history_text = build_history_string(history, max_messages=5, max_chars=1800)
     
     # Step 3 - generate answer
-    prompt = f"""You are a helpful research assistant. Answer the user's question using ONLY the provided context below.
-If the answer is not in the context, say "I couldn't find this in the provided documents."
-Always be concise and accurate. Cite which source you used.
+    prompt = f"""
+You are a helpful research assistant. Use ONLY the provided 'Context' (below) to answer the user's question.
+If the answer is not in the context or is not matching even a little bit then only, respond exactly: "I couldn't find this in the provided documents."
 
-Context:
+Always be concise and accurate. Cite sources you used in square brackets like [Source 1], [Source 2].
+
+--- Conversation history (most recent first) ---
+{history_text if history_text else "(no recent history)"}
+
+--- Context (documents) ---
 {context}
 
 Question: {query}

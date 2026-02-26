@@ -307,46 +307,49 @@ class _HomePageState extends State<HomePage> {
                     itemCount: plp.projectList.length,
                     itemBuilder: (context, index) {
                       Project currProj = plp.projectList[index];
-                      return Container(
-                        height: 80,
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.6),
-                              offset: Offset(4, 4),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            ),
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.05),
-                              offset: Offset(-2, -2),
-                              blurRadius: 6,
-                              spreadRadius: 0,
-                            ),
-                          ],
-                          color: const Color.fromARGB(255, 47, 46, 46),
-                          border: BoxBorder.all(color: Colors.grey),
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        padding: EdgeInsets.all(12),
-                        child: Center(
-                          child: ListTile(
-                            onTap: () => Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                    ChatPage(projectId: currProj.id),
+                      return Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Container(
+                          height: 80,
+                          decoration: BoxDecoration(
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.6),
+                                offset: Offset(4, 4),
+                                blurRadius: 8,
+                                spreadRadius: 1,
                               ),
-                            ),
-                            leading: Text(
-                              currProj.name,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                                fontSize: 16,
+                              BoxShadow(
+                                color: Colors.white.withOpacity(0.05),
+                                offset: Offset(-2, -2),
+                                blurRadius: 6,
+                                spreadRadius: 0,
                               ),
+                            ],
+                            color: const Color.fromARGB(255, 47, 46, 46),
+                            border: BoxBorder.all(color: Colors.grey),
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: EdgeInsets.all(12),
+                          child: Center(
+                            child: ListTile(
+                              onTap: () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      ChatPage(projectId: currProj.id),
+                                ),
+                              ),
+                              leading: Text(
+                                currProj.name,
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              trailing: Text(currProj.createdAt.toString()),
                             ),
-                            trailing: Text(currProj.createdAt.toString()),
                           ),
                         ),
                       );

@@ -1,6 +1,8 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/SERVICES/dioClient.dart';
+import 'package:research_helper/SERVICES/storage_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Apiservices {
@@ -18,7 +20,7 @@ class Apiservices {
     try {
       final response = await Dioclient.dio.post(
         "/ingest/url",
-        data: {"url": url, "userId": userId, "projectId" : projectId},
+        data: {"url": url, "userId": userId, "projectId": projectId},
       );
       return response.data;
     } on DioException catch (e) {
@@ -37,7 +39,7 @@ class Apiservices {
           file.path,
           filename: file.path.split('/').last,
         ),
-        "userId" : userId,
+        "userId": userId,
         "projectId": projectId,
       });
 
@@ -51,14 +53,47 @@ class Apiservices {
   static Future<String> summarize(String projectId) async {
     String userId = await getUserId();
     try {
-
       final response = await Dioclient.dio.post(
         "/summarize",
-        data: {"projectId": projectId, "userId" : userId},
+        data: {"projectId": projectId, "userId": userId},
       );
       return response.data["summary"];
     } on DioException catch (e) {
       throw _handleError(e);
+    }
+  }
+
+  static Future<Message?> query(String content, String projId) async {
+    String userId = await getUserId();
+    try {
+      final res = await Dioclient.dio.post(
+        '/query',
+        data: {
+          "query": content,
+          "userId": userId,
+          "projectId": projId,
+          "k": 5,
+          "history": StorageServices.getLastNMessagesJson(projId, 5),
+        },
+      );
+        print("query response = ${res.data['answer']}");
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        Message aiMessage = Message(
+          role: 'ai',
+          content: res.data['answer'],
+          timestamp: DateTime.now(),
+        );
+        
+        await StorageServices.addMessage(projId, aiMessage);
+        return aiMessage;
+      } else {
+        
+        return null;
+      }
+    } catch (e) {
+      print('got in catch while querying ${e}');
+      return null;
     }
   }
 

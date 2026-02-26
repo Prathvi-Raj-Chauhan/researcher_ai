@@ -1,9 +1,9 @@
+import 'dart:convert';
+
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PROVIDER/project_list_provider.dart';
-import 'package:research_helper/SERVICES/apiServices.dart';
-import 'package:research_helper/SERVICES/dioClient.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -38,7 +38,7 @@ class StorageServices {
     ProjectListProvider().addNewProject(name, userId, proj);
     await _box.put(proj.id, proj);
 
-    //api call
+    
 
     return proj;
   }
@@ -84,6 +84,22 @@ class StorageServices {
     return messages.sublist(messages.length - n);
   }
 
+  static List<Map<String, dynamic>> getLastNMessagesJson(String id, int n) {
+    final messages = getLastNMessages(id, n);
+    if (messages.length <= n) {
+      return messages.map((m) => toJson(m)).toList();
+    }
+
+    final lastMessages = messages.sublist(messages.length - n);
+    return lastMessages.map((m) => toJson(m)).toList();
+  }
+ 
+  static Map<String, dynamic> toJson(Message message) {
+    return {
+      "role": message.role,
+      "content": message.content,
+    };
+  }
   //search project
   static List<Project> searchProjects(String query) {
     return _box.values

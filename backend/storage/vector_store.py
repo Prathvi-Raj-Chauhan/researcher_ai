@@ -17,6 +17,8 @@ def create_vector_store(chunks, userId: str, projectId: str) -> Chroma:
         collection_name=_collection_name(userId, projectId),
         collection_metadata={"hnsw:space": "cosine"}
     )
+    print("Stored in")
+    print(_collection_name(userId, projectId))
     return vectorstore
 
 def load_vector_store(userId: str, projectId: str) -> Chroma:

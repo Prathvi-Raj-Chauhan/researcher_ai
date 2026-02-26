@@ -4,3 +4,4 @@ storage/__pycache__/
 query/__pycache__/
 .env
 test_query.py
+/chroma_db/

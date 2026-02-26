@@ -9,22 +9,25 @@ class ProjectProvider extends ChangeNotifier {
   List<Message> get messages => _messages;
   bool get isLoading => _isLoading;
 
+  bool _currMessageIsLoading = false;
+  bool get currMessageIsLoadinge => _currMessageIsLoading;
+
   Future<void> addNewMessage(String projId, Message message) async {
-    _isLoading = true;
     notifyListeners();
+    _currMessageIsLoading = true;
     try {
       _messages.add(message);
       await StorageServices.addMessage(projId, message);
     } catch (e) {
       print("Got in catch while adding new messages");
     }
-    _isLoading = false;
+    _currMessageIsLoading = false;
     notifyListeners();
   }
 
   Future<void> fetchAllMessages(String projId) async {
-    _isLoading = true;
     notifyListeners();
+    _isLoading = true;
     try {
       _messages
           .clear(); // fetch messages will only be called when user enters new project so we have to fetch messages of that project only so first we clear it and then add all messages
