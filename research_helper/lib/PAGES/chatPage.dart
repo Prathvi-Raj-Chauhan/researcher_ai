@@ -2,6 +2,7 @@ import 'package:chat_bubbles/bubbles/bubble_normal.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:research_helper/COMPONENTS/suggestionCard.dart';
 import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/PROVIDER/project_provider.dart';
 import 'package:research_helper/SERVICES/apiServices.dart';
@@ -32,13 +33,17 @@ class _ChatPageState extends State<ChatPage> {
         _isTextEmpty = _messageController.text.trim().isEmpty;
       });
     });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
     context.read<ProjectProvider>().fetchAllMessages(widget.projectId);
+  });
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
+    
       child: Scaffold(
+        
         backgroundColor: Colors.black,
         body: Column(
           children: [
@@ -50,6 +55,7 @@ class _ChatPageState extends State<ChatPage> {
                 fontSize: 28,
               ),
             ),
+            SuggestionCart(projectId: widget.projectId),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(8.0),
@@ -192,11 +198,12 @@ class _ChatPageState extends State<ChatPage> {
       _messageController.text,
     );
     _messageController.clear();
-    await StorageServices.addMessage(
-      widget.projectId,
-      userMessage,
-    ); //user's message is added from here only and the response we get from backend is ai's message and will be added to storage from the api call
-
+    // await StorageServices.addMessage(
+    //   widget.projectId,
+    //   userMessage,
+    // ); 
+    
+    //user's message is added from here only and the response we get from backend is ai's message and will be added to storage from the api call
     context.read<ProjectProvider>().addNewMessage(
       widget.projectId,
       userMessage,
@@ -221,7 +228,7 @@ class _ChatPageState extends State<ChatPage> {
             "There was an error in sending your message to backend for querying",
         timestamp: DateTime.now(),
       );
-      await StorageServices.addMessage(widget.projectId, error);
+      // await StorageServices.addMessage(widget.projectId, error);
       context.read<ProjectProvider>().addNewMessage(widget.projectId, error);
     } else {
       context.read<ProjectProvider>().addNewMessage(

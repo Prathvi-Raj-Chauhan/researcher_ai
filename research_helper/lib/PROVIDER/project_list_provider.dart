@@ -22,17 +22,25 @@ class ProjectListProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future addNewProject(String name, String userId, Project proj) async {
-    _isLoading = true;
-    notifyListeners();
-    try {
-      _projectList.add(proj);
+  // Future addNewProject(String name, String userId, Project proj) async {
+  //   _isLoading = true;
+  //   notifyListeners();
+  //   try {
+  //     _projectList.add(proj);
 
-      return proj;
-    } catch (e) {
-      print("Caught error in fetching all projects ${e}");
-    }
-    _isLoading = false;
-    notifyListeners();
+  //     return proj;
+  //   } catch (e) {
+  //     print("Caught error in fetching all projects ${e}");
+  //   }
+  //   _isLoading = false;
+  //   notifyListeners();
+  // }
+  Future<void> addNewProject(String userId, Project proj) async {
+  try {
+    _projectList.insert(0, proj); // insert at top, newest first
+  } catch (e) {
+    print("Error adding project: $e");
   }
+  notifyListeners(); // just notify, no loading state needed here
+}
 }

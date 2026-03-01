@@ -7,10 +7,10 @@ load_dotenv()
 
 client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
-def summarize_document(session_id: str) -> dict:
+def summarize_document(userId: str, projectId : str) -> dict:
     
     # Step 1 - load the vector store for this session
-    vectorstore = load_vector_store(session_id)
+    vectorstore = load_vector_store(userId, projectId)
     
     # Step 2 - get a broad sample of chunks to summarize
     # we use a generic query to pull a wide variety of chunks
@@ -22,7 +22,7 @@ def summarize_document(session_id: str) -> dict:
     if not results:
         return {
             "summary": "Could not generate summary, no content found.",
-            "session_id": session_id
+            "session_id": f"{userId}__{projectId}"
         }
     
     # Step 3 - combine chunks into one context
@@ -46,8 +46,9 @@ Summary:"""
         model="gemini-2.5-flash",
         contents=prompt
     )
-
+    print("summary is - ")
+    print(response.text.strip())
     return {
         "summary": response.text.strip(),
-        "session_id": session_id
+        "session_id": f"{userId}__{projectId}"
     }

@@ -76,6 +76,9 @@ class _HomePageState extends State<HomePage> {
       } else {
         var res = await Apiservices.ingestFile(chosenPdf!, projId);
       }
+    SharedPreferences pref = await SharedPreferences.getInstance();
+    String userId = pref.getString('userId')!;
+    context.read<ProjectListProvider>().addNewProject(userId, newProj);
       Navigator.pop(context);
 
       Navigator.push(
@@ -339,7 +342,7 @@ class _HomePageState extends State<HomePage> {
                                   builder: (BuildContext context) =>
                                       ChatPage(projectId: currProj.id),
                                 ),
-                              ),
+                              ).then((_) => loadUserAndFetchProject()),
                               leading: Text(
                                 currProj.name,
                                 style: TextStyle(

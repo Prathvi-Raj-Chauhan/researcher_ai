@@ -35,12 +35,22 @@ class StorageServices {
       createdAt: DateTime.now(),
       userId: userId,
     );
-    ProjectListProvider().addNewProject(name, userId, proj);
+    // ProjectListProvider().addNewProject(name, userId, proj);
     await _box.put(proj.id, proj);
-
-    
-
     return proj;
+  }
+
+  static Future<void> addProjectSummary(
+    String projectId,
+    String summary,
+  ) async {
+    Project? currProj = _box.get(projectId);
+    currProj?.summary = summary;
+    currProj?.save();
+  }
+
+  static String? getProjectSummary(String projectId) {
+    return _box.get(projectId)?.summary;
   }
 
   static Future<bool> renameProject(String id, String newName) async {
@@ -93,13 +103,11 @@ class StorageServices {
     final lastMessages = messages.sublist(messages.length - n);
     return lastMessages.map((m) => toJson(m)).toList();
   }
- 
+
   static Map<String, dynamic> toJson(Message message) {
-    return {
-      "role": message.role,
-      "content": message.content,
-    };
+    return {"role": message.role, "content": message.content};
   }
+
   //search project
   static List<Project> searchProjects(String query) {
     return _box.values

@@ -125,6 +125,8 @@ def summarize(request: ProjectRequest):
             userId=request.userId,
             projectId=request.projectId,
         )
+        print("Sent summary is ")
+        print(result)
         return result
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

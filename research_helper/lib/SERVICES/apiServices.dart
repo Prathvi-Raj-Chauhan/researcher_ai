@@ -19,9 +19,18 @@ class Apiservices {
     String userId = await getUserId();
     try {
       final response = await Dioclient.dio.post(
+        //ingest
         "/ingest/url",
         data: {"url": url, "userId": userId, "projectId": projectId},
       );
+
+      //summarize
+      final sum = await Dioclient.dio.post(
+        "/summarize",
+        data: {"userId": userId, "projectId": projectId},
+      );
+      StorageServices.addProjectSummary(projectId, sum.data['summary']);
+
       return response.data;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -44,6 +53,12 @@ class Apiservices {
       });
 
       final response = await Dioclient.dio.post("/ingest/file", data: formData);
+      //summarize
+      final sum = await Dioclient.dio.post(
+        "/summarize",
+        data: {"userId": userId, "projectId": projectId},
+      );
+      StorageServices.addProjectSummary(projectId, sum.data['summary']);
       return response.data;
     } on DioException catch (e) {
       throw _handleError(e);
@@ -76,7 +91,7 @@ class Apiservices {
           "history": StorageServices.getLastNMessagesJson(projId, 5),
         },
       );
-        print("query response = ${res.data['answer']}");
+      print("query response = ${res.data['answer']}");
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         Message aiMessage = Message(
@@ -84,11 +99,10 @@ class Apiservices {
           content: res.data['answer'],
           timestamp: DateTime.now(),
         );
-        
-        await StorageServices.addMessage(projId, aiMessage);
+
+        // await StorageServices.addMessage(projId, aiMessage);
         return aiMessage;
       } else {
-        
         return null;
       }
     } catch (e) {
