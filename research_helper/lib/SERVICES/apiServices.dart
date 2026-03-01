@@ -1,15 +1,57 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/SERVICES/dioClient.dart';
 import 'package:research_helper/SERVICES/storage_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
 class Apiservices {
   static Future<String> getUserId() async {
     final pref = await SharedPreferences.getInstance();
     String userId = pref.getString('userId')!;
     return userId;
+  }
+
+  //we sill use http package for streams
+  static Stream<Map<String, dynamic>> ingestUrlStream(
+    String url,
+    String projectId,
+  ) async* {
+    // async* is used for streams because it returns more than one value(stream)
+    String userId = await getUserId();
+    final request = http.Request(
+      'POST',
+      Uri.parse('http://10.0.2.2:8000/ingestUrl/stream'),
+    );
+    request.headers['Content-Type'] = 'application/json';
+    request.body = jsonEncode({
+      'url': url,
+      'user_id': userId,
+      'project_id': projectId,
+    });
+
+    final client = http.Client();
+    try {
+      final response = await client.send(request);
+      final stream = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter()); // what does this do ?
+
+      await for (final line in stream) {
+        if (line.startsWith('data: ')) {
+          final data = jsonDecode(line.substring(6));
+          yield data;
+          if (data['step'] == 4 || data['step'] == -1) {
+            break;
+          }
+        }
+      }
+    } catch (e) {
+    } finally {
+      client.close();
+    }
   }
 
   static Future<Map<String, dynamic>> ingestUrl(

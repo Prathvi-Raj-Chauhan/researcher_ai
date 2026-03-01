@@ -5,6 +5,8 @@ from contextlib import asynccontextmanager
 import tempfile
 import os
 import asyncio
+import json 
+from fastapi.responses import StreamingResponse  
 
 load_dotenv()
 
@@ -147,3 +149,64 @@ def delete_user_session(request: ProjectRequest):
 def manual_cleanup(max_age_hours: int = 24):
     deleted = cleanup_old_sessions(max_age_hours=max_age_hours)
     return {"deleted_sessions": deleted}
+
+@app.post("/ingestUrl/stream") 
+async def ingest_url_stream(request: URLRequest):
+    async def event_stream():
+        try:
+            yield f"data: {json.dumps({'step': 0, 'message': 'Reading document...'})}\n\n"
+            docs = load_document(request.url)
+
+            yield f"data: {json.dumps({'step': 1, 'message': 'Chunking content...'})}\n\n"
+            chunks = split_documents(docs)
+
+            yield f"data: {json.dumps({'step': 2, 'message': 'Storing embeddings...'})}\n\n"
+            create_vector_store(chunks, userId=request.userId, projectId=request.projectId)  # fixed
+
+            yield f"data: {json.dumps({'step': 3, 'message': 'Generating summary...'})}\n\n"
+            summary_result = summarize_document(userId=request.userId, projectId=request.projectId)  # fixed
+
+            yield f"data: {json.dumps({'step': 4, 'message': 'Done!', 'summary': summary_result['summary']})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'step': -1, 'message': str(e)})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.post("/ingest/file/stream")
+async def ingest_file_stream(
+    file: UploadFile = File(...),
+    userId: str = Form(...),      
+    projectId: str = Form(...),
+):
+    contents = await file.read()
+    suffix = os.path.splitext(file.filename)[1]
+
+    async def event_stream():
+        tmp_path = None
+        try:
+            yield f"data: {json.dumps({'step': 0, 'message': 'Reading document...'})}\n\n"
+            with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
+                tmp.write(contents)
+                tmp_path = tmp.name
+            docs = load_document(tmp_path)
+
+            yield f"data: {json.dumps({'step': 1, 'message': 'Chunking content...'})}\n\n"
+            chunks = split_documents(docs)
+
+            yield f"data: {json.dumps({'step': 2, 'message': 'Storing embeddings...'})}\n\n"
+            create_vector_store(chunks, userId=userId, projectId=projectId)  # fixed
+
+            yield f"data: {json.dumps({'step': 3, 'message': 'Generating summary...'})}\n\n"
+            summary_result = summarize_document(userId=userId, projectId=projectId)  # fixed
+
+            yield f"data: {json.dumps({'step': 4, 'message': 'Done!', 'summary': summary_result['summary']})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'step': -1, 'message': str(e)})}\n\n"
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.unlink(tmp_path)
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
