@@ -28,8 +28,8 @@ class Apiservices {
     request.headers['Content-Type'] = 'application/json';
     request.body = jsonEncode({
       'url': url,
-      'user_id': userId,
-      'project_id': projectId,
+      'userId': userId,
+      'projectId': projectId,
     });
 
     final client = http.Client();

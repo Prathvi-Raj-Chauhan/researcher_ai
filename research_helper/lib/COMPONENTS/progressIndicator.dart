@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PAGES/chatPage.dart';
 import 'package:research_helper/PROVIDER/progress_provider.dart';
+import 'package:research_helper/PROVIDER/project_list_provider.dart';
 import 'package:research_helper/SERVICES/apiServices.dart';
 import 'package:research_helper/SERVICES/storage_services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -72,6 +73,7 @@ class _IngestionScreenState extends State<IngestionScreen> {
 
         if (step == 4) {
           final summary = event['summary'] as String? ?? '';
+          context.read<ProjectListProvider>().addNewProject(userId, widget.project);
           await StorageServices.addProjectSummary(widget.project.id, summary);
           await Future.delayed(const Duration(milliseconds: 700));
           if (mounted) {

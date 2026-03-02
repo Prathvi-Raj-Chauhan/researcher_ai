@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:research_helper/COMPONENTS/progressIndicator.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PAGES/chatPage.dart';
 import 'package:research_helper/PROVIDER/project_list_provider.dart';
@@ -71,20 +72,29 @@ class _HomePageState extends State<HomePage> {
 
       // 2. saving ingesting the document in chroma db
       String projId = newProj.id;
+      String sourceType = "";
+
       if (chosenUrl != null) {
-        var res = await Apiservices.ingestUrl(chosenUrl!, projId);
+        sourceType = "url";
+        // var res = await Apiservices.ingestUrl(chosenUrl!, projId);
+         Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => IngestionScreen(project: newProj, sourceType: sourceType, url: chosenUrl!,)),
+      );
+        
       } else {
+        sourceType = "file";
         var res = await Apiservices.ingestFile(chosenPdf!, projId);
       }
-    SharedPreferences pref = await SharedPreferences.getInstance();
-    String userId = pref.getString('userId')!;
-    context.read<ProjectListProvider>().addNewProject(userId, newProj);
+      // SharedPreferences pref = await SharedPreferences.getInstance();
+      // String userId = pref.getString('userId')!;
+      // context.read<ProjectListProvider>().addNewProject(userId, newProj);
       Navigator.pop(context);
 
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => ChatPage(projectId: projId)),
-      );
+      // Navigator.push(
+      //   context,
+      //   MaterialPageRoute(builder: (_) => ChatPage(projectId: projId)),
+      // );
     } catch (e) {
       debugPrint(e.toString());
     }

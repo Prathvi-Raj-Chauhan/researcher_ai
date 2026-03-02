@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PAGES/homepage.dart';
+import 'package:research_helper/PROVIDER/progress_provider.dart';
 import 'package:research_helper/PROVIDER/project_list_provider.dart';
 import 'package:research_helper/PROVIDER/project_provider.dart';
 import 'package:research_helper/SERVICES/dioClient.dart';
@@ -36,7 +37,8 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => ProjectProvider()),
-        ChangeNotifierProvider(create: (_) => ProjectListProvider())
+        ChangeNotifierProvider(create: (_) => ProjectListProvider()),
+        ChangeNotifierProvider(create: (_) => ProgressProvider())
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
