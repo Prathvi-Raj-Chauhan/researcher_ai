@@ -43,6 +43,8 @@ dependencies:
   provider: ^6.1.5+1
   chat_bubbles: ^1.8.0
   http: ^1.6.0
+  flutter_slidable: ^4.0.3
+  connectivity_plus: ^7.0.0
 
 dev_dependencies:
   flutter_test:

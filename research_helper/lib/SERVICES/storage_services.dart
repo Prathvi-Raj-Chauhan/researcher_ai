@@ -1,9 +1,6 @@
-import 'dart:convert';
-
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:research_helper/MODELS/message.dart';
 import 'package:research_helper/MODELS/project.dart';
-import 'package:research_helper/PROVIDER/project_list_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 
@@ -25,6 +22,7 @@ class StorageServices {
   static Project? getSpecificProject(String id) {
     return _box.get(id);
   }
+
 
   static Future<Project> createNewProject(String name) async {
     SharedPreferences pref = await SharedPreferences.getInstance();

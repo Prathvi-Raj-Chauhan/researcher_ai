@@ -4,8 +4,10 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:research_helper/COMPONENTS/progressIndicator.dart';
+import 'package:research_helper/COMPONENTS/projectTile.dart';
 import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PAGES/chatPage.dart';
+import 'package:research_helper/PROVIDER/connectivity_provider.dart';
 import 'package:research_helper/PROVIDER/project_list_provider.dart';
 import 'package:research_helper/SERVICES/apiServices.dart';
 import 'package:research_helper/SERVICES/storage_services.dart';
@@ -23,6 +25,7 @@ class _HomePageState extends State<HomePage> {
   File? chosenText;
   String? chosenUrl;
   String sourceType = "";
+  TextEditingController _rename = TextEditingController();
 
   final TextEditingController _urlController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
@@ -77,11 +80,16 @@ class _HomePageState extends State<HomePage> {
       if (chosenUrl != null) {
         sourceType = "url";
         // var res = await Apiservices.ingestUrl(chosenUrl!, projId);
-         Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => IngestionScreen(project: newProj, sourceType: sourceType, url: chosenUrl!,)),
-      );
-        
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => IngestionScreen(
+              project: newProj,
+              sourceType: sourceType,
+              url: chosenUrl!,
+            ),
+          ),
+        );
       } else {
         sourceType = "file";
         var res = await Apiservices.ingestFile(chosenPdf!, projId);
@@ -120,259 +128,304 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Scaffold(
-        floatingActionButton: FloatingActionButton.extended(
-          backgroundColor: Colors.white,
-          tooltip: "New Project",
-          label: const Text('New Project'),
-          onPressed: () {
-            _nameController.clear();
-            _urlController.clear();
-            setState(() {
-              chosenPdf = null;
-              chosenText = null;
-              chosenUrl = null;
-              sourceType = "";
-            });
+      child: Consumer<ConnectivityProvider>(
+        builder: (context, connectivity, child) {
+          if (connectivity.isOffline) {
+            return Scaffold(
+              body: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.wifi_off, size: 80, color: Colors.red),
+                    SizedBox(height: 20),
+                    Text(
+                      "No Internet Connection",
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 10),
+                    Text(
+                      "Please check your connection.",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }
 
-            showDialog(
-              context: context,
-              builder: (context) {
-                return StatefulBuilder(
-                  // <- key fix: lets dialog rebuild itself
-                  builder: (context, setDialogState) {
-                    return Dialog(
-                      backgroundColor: const Color.fromARGB(255, 35, 35, 35),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'New Research',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                              ),
-                            ),
-                            const SizedBox(height: 10),
-                            TextField(
-                              style: TextStyle(color: Colors.white),
-                              controller: _nameController,
+          return Scaffold(
+            floatingActionButton: FloatingActionButton.extended(
+              backgroundColor: Colors.white,
+              tooltip: "New Project",
+              label: const Text('New Project'),
+              onPressed: () {
+                _nameController.clear();
+                _urlController.clear();
+                setState(() {
+                  chosenPdf = null;
+                  chosenText = null;
+                  chosenUrl = null;
+                  sourceType = "";
+                });
 
-                              onChanged: (_) => setDialogState(
-                                () {},
-                              ), // rebuild to enable button
-                              decoration: InputDecoration(
-                                hintText: 'Research name...',
-
-                                border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              'Choose Source',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                showDialog(
+                  context: context,
+                  builder: (context) {
+                    return StatefulBuilder(
+                      // let dialog rebuild itself
+                      builder: (context, setDialogState) {
+                        return Dialog(
+                          backgroundColor: const Color.fromARGB(
+                            255,
+                            35,
+                            35,
+                            35,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                sourceButton(
-                                  "PDF",
-                                  Icons.picture_as_pdf_rounded,
-                                  Colors.red,
-                                  () {
-                                    choosePdfFile(setDialogState);
-                                  },
-                                ),
-                                sourceButton(
-                                  "URL",
-                                  Icons.link,
-                                  Colors.blueAccent,
-                                  () {
-                                    _showUrlDialog(context, setDialogState);
-                                  },
-                                ),
-                                sourceButton(
-                                  "TXT",
-                                  Icons.text_fields_rounded,
-                                  Colors.grey,
-                                  () {
-                                    chooseTextFile(setDialogState);
-                                  },
-                                ),
-                              ],
-                            ),
-
-                            // show selected source
-                            if (chosenPdf != null ||
-                                chosenText != null ||
-                                chosenUrl != null) ...[
-                              const SizedBox(height: 12),
-                              Container(
-                                padding: const EdgeInsets.all(10),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                  border: Border.all(
-                                    color: Colors.green.withOpacity(0.4),
+                                const Text(
+                                  'New Research',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 20,
                                   ),
                                 ),
-                                child: Row(
-                                  children: [
-                                    const Icon(
-                                      Icons.check_circle,
-                                      color: Colors.green,
-                                      size: 16,
+                                const SizedBox(height: 10),
+                                TextField(
+                                  style: TextStyle(color: Colors.white),
+                                  controller: _nameController,
+
+                                  onChanged: (_) => setDialogState(
+                                    () {},
+                                  ), // rebuild to enable button
+                                  decoration: InputDecoration(
+                                    hintText: 'Research name...',
+
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(12),
                                     ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        chosenPdf?.path.split('\\').last ??
-                                            chosenText?.path.split('\\').last ??
-                                            chosenUrl ??
-                                            "",
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.white,
-                                        ),
-                                      ),
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                const Text(
+                                  'Choose Source',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceAround,
+                                  children: [
+                                    sourceButton(
+                                      "PDF",
+                                      Icons.picture_as_pdf_rounded,
+                                      Colors.red,
+                                      () {
+                                        choosePdfFile(setDialogState);
+                                      },
+                                    ),
+                                    sourceButton(
+                                      "URL",
+                                      Icons.link,
+                                      Colors.blueAccent,
+                                      () {
+                                        _showUrlDialog(context, setDialogState);
+                                      },
+                                    ),
+                                    sourceButton(
+                                      "TXT",
+                                      Icons.text_fields_rounded,
+                                      Colors.grey,
+                                      () {
+                                        chooseTextFile(setDialogState);
+                                      },
                                     ),
                                   ],
                                 ),
-                              ),
-                            ],
 
-                            const SizedBox(height: 20),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  foregroundColor: Colors.white,
-                                  disabledBackgroundColor: Colors.grey[300],
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 14,
+                                // show selected source
+                                if (chosenPdf != null ||
+                                    chosenText != null ||
+                                    chosenUrl != null) ...[
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: Colors.green.withOpacity(0.4),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            chosenPdf?.path.split('\\').last ??
+                                                chosenText?.path
+                                                    .split('\\')
+                                                    .last ??
+                                                chosenUrl ??
+                                                "",
+                                            overflow: TextOverflow.ellipsis,
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
+                                ],
+
+                                const SizedBox(height: 20),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.black,
+                                      foregroundColor: Colors.white,
+                                      disabledBackgroundColor: Colors.grey[300],
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 14,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                    ),
+                                    onPressed: _canSubmit()
+                                        ? _submitResearch
+                                        : null,
+                                    child: const Text('Start Research'),
                                   ),
                                 ),
-                                onPressed: _canSubmit()
-                                    ? _submitResearch
-                                    : null,
-                                child: const Text('Start Research'),
-                              ),
+                              ],
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
-            );
-          },
-          icon: const Icon(Icons.add),
-        ),
-        backgroundColor: Colors.black,
-        body: Column(
-          children: [
-            const Padding(
-              padding: EdgeInsets.all(20),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Researcher',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
+              icon: const Icon(Icons.add),
+            ),
+            backgroundColor: Colors.black,
+            body: Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Researcher',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            Expanded(
-              child: Consumer<ProjectListProvider>(
-                builder: (context, plp, _) {
-                  if (plp.isLoading) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-                  if (plp.projectList.length == 0) {
-                    return Center(
-                      child: Text(
-                        'No research yet\n Tap + to start',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    itemCount: plp.projectList.length,
-                    itemBuilder: (context, index) {
-                      Project currProj = plp.projectList[index];
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Container(
-                          height: 80,
-                          decoration: BoxDecoration(
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.6),
-                                offset: Offset(4, 4),
-                                blurRadius: 8,
-                                spreadRadius: 1,
-                              ),
-                              BoxShadow(
-                                color: Colors.white.withOpacity(0.05),
-                                offset: Offset(-2, -2),
-                                blurRadius: 6,
-                                spreadRadius: 0,
-                              ),
-                            ],
-                            color: const Color.fromARGB(255, 47, 46, 46),
-                            border: BoxBorder.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(15),
+                Expanded(
+                  child: Consumer<ProjectListProvider>(
+                    builder: (context, plp, _) {
+                      if (plp.isLoading) {
+                        return Center(child: CircularProgressIndicator());
+                      }
+                      if (plp.projectList.length == 0) {
+                        return Center(
+                          child: Text(
+                            'No research yet\n Tap + to start',
+                            style: TextStyle(color: Colors.white),
                           ),
-                          padding: EdgeInsets.all(12),
-                          child: Center(
-                            child: ListTile(
-                              onTap: () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (BuildContext context) =>
-                                      ChatPage(projectId: currProj.id),
-                                ),
-                              ).then((_) => loadUserAndFetchProject()),
-                              leading: Text(
-                                currProj.name,
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              trailing: Text(currProj.createdAt.toString()),
+                        );
+                      }
+                      return ListView.builder(
+                        itemCount: plp.projectList.length,
+                        itemBuilder: (context, index) {
+                          Project currProj = plp.projectList[index];
+                          return Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            // child: Container(
+                            //   height: 80,
+                            //   decoration: BoxDecoration(
+                            //     boxShadow: [
+                            //       BoxShadow(
+                            //         color: Colors.black.withOpacity(0.6),
+                            //         offset: Offset(4, 4),
+                            //         blurRadius: 8,
+                            //         spreadRadius: 1,
+                            //       ),
+                            //       BoxShadow(
+                            //         color: Colors.white.withOpacity(0.05),
+                            //         offset: Offset(-2, -2),
+                            //         blurRadius: 6,
+                            //         spreadRadius: 0,
+                            //       ),
+                            //     ],
+                            //     color: const Color.fromARGB(255, 47, 46, 46),
+                            //     border: BoxBorder.all(color: Colors.grey),
+                            //     borderRadius: BorderRadius.circular(15),
+                            //   ),
+                            //   padding: EdgeInsets.all(12),
+                            //   child: Center(
+                            //     child: ListTile(
+                            //       onTap: () => Navigator.push(
+                            //         context,
+                            //         MaterialPageRoute(
+                            //           builder: (BuildContext context) =>
+                            //               ChatPage(projectId: currProj.id),
+                            //         ),
+                            //       ).then((_) => loadUserAndFetchProject()),
+                            //       leading: Text(
+                            //         currProj.name,
+                            //         style: TextStyle(
+                            //           fontWeight: FontWeight.bold,
+                            //           color: Colors.white,
+                            //           fontSize: 16,
+                            //         ),
+                            //       ),
+                            //       trailing: Text(currProj.createdAt.toString()),
+                            //     ),
+                            //   ),
+                            // ),
+                            child: ProjectTile(
+                              currProj: currProj,
+                              onRename: (currProj) =>
+                                  openRenameDialog(currProj),
+                              onDelete: (currProj) =>
+                                  openDeleteDialog(currProj),
                             ),
-                          ),
-                        ),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -458,6 +511,81 @@ class _HomePageState extends State<HomePage> {
           ],
         ),
       ),
+    );
+  }
+
+  void onDelete(String id) {
+    StorageServices.deleteProject(id);
+    context.read<ProjectListProvider>().deleteProject(id);
+  }
+
+  void openDeleteDialog(Project currProj) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Delete Project"),
+          content: Text('Are you sure want to delete this project ?'),
+          actions: [
+            ElevatedButton(
+              onPressed: () {
+                onDelete(currProj.id);
+                Navigator.pop(context);
+              },
+              child: Text('Delete'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void onRename(String id, String newName) {
+    StorageServices.renameProject(id, newName);
+    Provider.of<ProjectListProvider>(
+      context,
+      listen: false,
+    ).renameProject(id, newName);
+  }
+
+  void openRenameDialog(Project proj) {
+    showDialog(context: context, builder: (context) => renameProject(proj));
+  }
+
+  Widget renameProject(Project currProj) {
+    _rename.text = currProj.name;
+
+    return AlertDialog(
+      title: Text("Rename Your Project"),
+      content: TextField(
+        controller: _rename,
+        decoration: InputDecoration(
+          hintText: 'Enter new Name',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      ),
+      actions: [
+        ElevatedButton(
+          onPressed: () {
+            if (_rename.text != currProj.name)
+              onRename(currProj.id, _rename.text);
+            Navigator.pop(context);
+          },
+          child: Text('Save'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: Text('Cancel'),
+        ),
+      ],
     );
   }
 }

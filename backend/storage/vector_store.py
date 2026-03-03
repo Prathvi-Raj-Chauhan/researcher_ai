@@ -25,7 +25,8 @@ def load_vector_store(userId: str, projectId: str) -> Chroma:
     return Chroma(
         persist_directory=PERSIST_DIRECTORY,
         embedding_function=embedding_model,
-        collection_name=_collection_name(userId, projectId)
+        collection_name=_collection_name(userId, projectId),
+        collection_metadata={"hnsw:space": "cosine"}
     )
 
 

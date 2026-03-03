@@ -36,11 +36,22 @@ class ProjectListProvider extends ChangeNotifier {
   //   notifyListeners();
   // }
   Future<void> addNewProject(String userId, Project proj) async {
-  try {
-    _projectList.insert(0, proj); // insert at top, newest first
-  } catch (e) {
-    print("Error adding project: $e");
+    try {
+      _projectList.insert(0, proj); // insert at top, newest first
+    } catch (e) {
+      print("Error adding project: $e");
+    }
+    notifyListeners(); // just notify, no loading state needed here
   }
-  notifyListeners(); // just notify, no loading state needed here
-}
+
+  void deleteProject(String projectId) {
+    _projectList.removeWhere((p) => p.id == projectId);
+    notifyListeners();
+  }
+
+  void renameProject(String id, String newName) {
+    final project = _projectList.firstWhere((p) => p.id == id);
+    project.name = newName;
+    notifyListeners();
+  }
 }

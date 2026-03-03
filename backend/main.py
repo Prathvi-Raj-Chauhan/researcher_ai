@@ -12,7 +12,7 @@ load_dotenv()
 
 from ingestion.loader import load_document
 from ingestion.chunker import split_documents
-from storage.vector_store import create_vector_store, delete_vector_store, cleanup_old_sessions
+from storage.vector_store import create_vector_store, delete_vector_store, cleanup_old_sessions, load_vector_store
 from query.synthesizer import synthesize
 from query.summarizer import summarize_document
 
@@ -172,6 +172,28 @@ async def ingest_url_stream(request: URLRequest):
             yield f"data: {json.dumps({'step': -1, 'message': str(e)})}\n\n"
 
     return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+@app.post("/ingestUrl/add/stream")
+async def ingest_url_add_stream(request: URLRequest):
+    async def event_stream():
+        try:
+            yield f"data: {json.dumps({'step': 0, 'message': 'Reading document...'})}\n\n"
+            docs = load_document(request.url)
+
+            yield f"data: {json.dumps({'step': 1, 'message': 'Chunking content...'})}\n\n"
+            chunks = split_documents(docs)
+
+            yield f"data: {json.dumps({'step': 2, 'message': 'Storing embeddings...'})}\n\n"
+            chroma = load_vector_store(userId=request.userId, projectId=request.projectId)
+            chroma.add_documents(chunks)
+
+            yield f"data: {json.dumps({'step': 3, 'message': 'Done!'})}\n\n"
+
+        except Exception as e:
+            yield f"data: {json.dumps({'step': -1, 'message': str(e)})}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 
 
 @app.post("/ingest/file/stream")

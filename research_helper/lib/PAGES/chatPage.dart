@@ -1,9 +1,15 @@
+import 'dart:io';
+
 import 'package:chat_bubbles/bubbles/bubble_normal.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:research_helper/COMPONENTS/progressAddIndicator.dart';
+import 'package:research_helper/COMPONENTS/progressIndicator.dart';
 import 'package:research_helper/COMPONENTS/suggestionCard.dart';
 import 'package:research_helper/MODELS/message.dart';
+import 'package:research_helper/MODELS/project.dart';
 import 'package:research_helper/PROVIDER/project_provider.dart';
 import 'package:research_helper/SERVICES/apiServices.dart';
 import 'package:research_helper/SERVICES/creatingMessage.dart';
@@ -18,6 +24,48 @@ class ChatPage extends StatefulWidget {
 }
 
 class _ChatPageState extends State<ChatPage> {
+  File? chosenPdf;
+  File? chosenText;
+  String? chosenUrl;
+  String sourceType = "";
+
+  final TextEditingController _urlController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+
+  void choosePdfFile(StateSetter setDialogState) async {
+    FilePickerResult? res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf'],
+    );
+    if (res != null) {
+      setDialogState(() {
+        chosenPdf = File(res.files.single.path!);
+        chosenText = null;
+        chosenUrl = null;
+        sourceType = "pdf";
+      });
+    }
+  }
+
+  void chooseTextFile(StateSetter setDialogState) async {
+    FilePickerResult? res = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['txt'],
+    );
+    if (res != null) {
+      setDialogState(() {
+        chosenText = File(res.files.single.path!); // fixed bug
+        chosenPdf = null;
+        chosenUrl = null;
+        sourceType = "txt";
+      });
+    }
+  }
+
+  bool _canSubmit() {
+    return (chosenPdf != null || chosenText != null || chosenUrl != null);
+  }
+
   TextEditingController _messageController = TextEditingController();
 
   bool userMessageSent = false;
@@ -25,7 +73,6 @@ class _ChatPageState extends State<ChatPage> {
   bool _isTextEmpty = true;
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
 
     _messageController.addListener(() {
@@ -33,17 +80,15 @@ class _ChatPageState extends State<ChatPage> {
         _isTextEmpty = _messageController.text.trim().isEmpty;
       });
     });
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-    context.read<ProjectProvider>().fetchAllMessages(widget.projectId);
-  });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ProjectProvider>().fetchAllMessages(widget.projectId);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-    
       child: Scaffold(
-        
         backgroundColor: Colors.black,
         body: Column(
           children: [
@@ -148,7 +193,173 @@ class _ChatPageState extends State<ChatPage> {
               child: Row(
                 children: [
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      _nameController.clear();
+                      _urlController.clear();
+                      setState(() {
+                        chosenPdf = null;
+                        chosenText = null;
+                        chosenUrl = null;
+                        sourceType = "";
+                      });
+
+                      showDialog(
+                        context: context,
+                        builder: (context) {
+                          return StatefulBuilder(
+                            // let dialog rebuild itself
+                            builder: (context, setDialogState) {
+                              return Dialog(
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  35,
+                                  35,
+                                  35,
+                                ),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      const Text(
+                                        'Add Source',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 10),
+                                      
+                                      const SizedBox(height: 16),
+                                      const Text(
+                                        'Choose Source',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceAround,
+                                        children: [
+                                          sourceButton(
+                                            "PDF",
+                                            Icons.picture_as_pdf_rounded,
+                                            Colors.red,
+                                            () {
+                                              choosePdfFile(setDialogState);
+                                            },
+                                          ),
+                                          sourceButton(
+                                            "URL",
+                                            Icons.link,
+                                            Colors.blueAccent,
+                                            () {
+                                              _showUrlDialog(
+                                                context,
+                                                setDialogState,
+                                              );
+                                            },
+                                          ),
+                                          sourceButton(
+                                            "TXT",
+                                            Icons.text_fields_rounded,
+                                            Colors.grey,
+                                            () {
+                                              chooseTextFile(setDialogState);
+                                            },
+                                          ),
+                                        ],
+                                      ),
+
+                                      // show selected source
+                                      if (chosenPdf != null ||
+                                          chosenText != null ||
+                                          chosenUrl != null) ...[
+                                        const SizedBox(height: 12),
+                                        Container(
+                                          padding: const EdgeInsets.all(10),
+                                          decoration: BoxDecoration(
+                                            color: Colors.green.withOpacity(
+                                              0.1,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                            border: Border.all(
+                                              color: Colors.green.withOpacity(
+                                                0.4,
+                                              ),
+                                            ),
+                                          ),
+                                          child: Row(
+                                            children: [
+                                              const Icon(
+                                                Icons.check_circle,
+                                                color: Colors.green,
+                                                size: 16,
+                                              ),
+                                              const SizedBox(width: 8),
+                                              Expanded(
+                                                child: Text(
+                                                  chosenPdf?.path
+                                                          .split('\\')
+                                                          .last ??
+                                                      chosenText?.path
+                                                          .split('\\')
+                                                          .last ??
+                                                      chosenUrl ??
+                                                      "",
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.white,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+
+                                      const SizedBox(height: 20),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: ElevatedButton(
+                                          style: ElevatedButton.styleFrom(
+                                            backgroundColor: Colors.black,
+                                            foregroundColor: Colors.white,
+                                            disabledBackgroundColor:
+                                                Colors.grey[300],
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 14,
+                                            ),
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(10),
+                                            ),
+                                          ),
+                                          onPressed: _canSubmit()
+                                              ? _addDoc
+                                              : null,
+                                          child: const Text('Start Research'),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          );
+                        },
+                      );
+                    },
                     icon: Icon(Icons.add, color: Colors.white),
                   ),
                   const SizedBox(width: 5),
@@ -201,8 +412,8 @@ class _ChatPageState extends State<ChatPage> {
     // await StorageServices.addMessage(
     //   widget.projectId,
     //   userMessage,
-    // ); 
-    
+    // );
+
     //user's message is added from here only and the response we get from backend is ai's message and will be added to storage from the api call
     context.read<ProjectProvider>().addNewMessage(
       widget.projectId,
@@ -241,4 +452,154 @@ class _ChatPageState extends State<ChatPage> {
       aiMessageLoading = false;
     });
   }
+
+  void _showUrlDialog(BuildContext context, StateSetter setDialogState) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                "Enter URL",
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+              const SizedBox(height: 10),
+              TextField(
+                controller: _urlController,
+                decoration: InputDecoration(
+                  hintText: 'https://...',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.black,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () {
+                    if (_urlController.text.trim().isNotEmpty) {
+                      setDialogState(() {
+                        chosenUrl = _urlController.text.trim();
+                        chosenPdf = null;
+                        chosenText = null;
+                        sourceType = "url";
+                      });
+                      Navigator.pop(context);
+                    }
+                  },
+                  child: const Text('Confirm'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget sourceButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color.fromARGB(255, 171, 171, 171),
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(icon, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // void _addDoc() async {
+  //   try {
+  //     // 1. get current project
+
+  //     Project currProj = await StorageServices.getSpecificProject(widget.projectId)!;
+
+  //     // 2. saving ingesting the document in chroma db
+  //     String projId = currProj.id;
+  //     String sourceType = "";
+
+  //     if (chosenUrl != null) {
+  //       sourceType = "url";
+  //       // var res = await Apiservices.ingestUrl(chosenUrl!, projId);
+  //       Navigator.push(
+  //         context,
+  //         MaterialPageRoute(
+  //           builder: (_) => IngestionAddScreen(
+  //             project: currProj,
+  //             sourceType: sourceType,
+  //             url: chosenUrl!,
+  //           ),
+  //         ),
+  //       );
+  //     } else {
+  //       sourceType = "file";
+  //       var res = await Apiservices.ingestFile(chosenPdf!, projId);
+  //     }
+  //     // SharedPreferences pref = await SharedPreferences.getInstance();
+  //     // String userId = pref.getString('userId')!;
+  //     // context.read<ProjectListProvider>().addNewProject(userId, newProj);
+  //     Navigator.pop(context);
+
+  //     // Navigator.push(
+  //     //   context,
+  //     //   MaterialPageRoute(builder: (_) => ChatPage(projectId: projId)),
+  //     // );
+  //   } catch (e) {
+  //     debugPrint(e.toString());
+  //   }
+  // }
+  void _addDoc() async {
+  try {
+    Project? currProj = StorageServices.getSpecificProject(widget.projectId);
+    if (currProj == null) return;
+
+    Navigator.pop(context); // close dialog first
+
+    if (chosenUrl != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => IngestionAddScreen(
+            project: currProj,
+            sourceType: "url",
+            url: chosenUrl,
+          ),
+        ),
+      );
+    } else if (chosenPdf != null || chosenText != null) {
+      // TODO: file stream later
+    }
+  } catch (e) {
+    debugPrint(e.toString());
+  }
+}
 }

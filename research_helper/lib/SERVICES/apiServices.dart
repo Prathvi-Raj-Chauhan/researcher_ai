@@ -53,6 +53,82 @@ class Apiservices {
       client.close();
     }
   }
+  static Stream<Map<String, dynamic>> ingestUrlAddStream(
+    String url,
+    String projectId,
+  ) async* {
+    // async* is used for streams because it returns more than one value(stream)
+    String userId = await getUserId();
+    final request = http.Request(
+      'POST',
+      Uri.parse('http://10.0.2.2:8000/ingestUrl/add/stream'),
+    );
+    request.headers['Content-Type'] = 'application/json';
+    request.body = jsonEncode({
+      'url': url,
+      'userId': userId,
+      'projectId': projectId,
+    });
+
+    final client = http.Client();
+    try {
+      final response = await client.send(request);
+      final stream = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter()); // what does this do ?
+
+      await for (final line in stream) {
+        if (line.startsWith('data: ')) {
+          final data = jsonDecode(line.substring(6));
+          yield data;
+          if (data['step'] == 3 || data['step'] == -1) {
+            break;
+          }
+        }
+      }
+    } catch (e) {
+    } finally {
+      client.close();
+    }
+  }
+
+  static Stream<Map<String, dynamic>> ingestFileStream({
+    required File file,
+    required String projectId,
+  }) async* {
+    String userId = await getUserId();
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('http://10.0.2.2:8000/ingest/file/stream'),
+    );
+    request.fields['userId'] = userId;
+    request.fields['projectId'] = projectId;
+    request.files.add(
+      await http.MultipartFile.fromPath(
+        'file',
+        file.path,
+        filename: file.path.split('/').last,
+      ),
+    );
+
+    final client = http.Client();
+    try {
+      final response = await client.send(request);
+      final stream = response.stream
+          .transform(utf8.decoder)
+          .transform(const LineSplitter());
+
+      await for (final line in stream) {
+        if (line.startsWith('data: ')) {
+          final data = jsonDecode(line.substring(6)); // strips the "data: " prefix (6 characters) leaving just the JSON string.
+          yield data;
+          if (data['step'] == 3 || data['step'] == -1) break;
+        }
+      }
+    } finally {
+      client.close();
+    }
+  }
 
   static Future<Map<String, dynamic>> ingestUrl(
     String url,

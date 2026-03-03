@@ -53,7 +53,7 @@ class _IngestionScreenState extends State<IngestionScreen> {
 
       final stream = widget.sourceType == 'url'
           ? Apiservices.ingestUrlStream(widget.url!, widget.project.id)
-          :Apiservices.ingestUrlStream(widget.url!, widget.project.id);
+          :Apiservices.ingestFileStream(file : widget.file!, projectId:  widget.project.id);
 
       await for (final event in stream) {
         if (!mounted) break;
