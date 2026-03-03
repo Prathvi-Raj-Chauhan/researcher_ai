@@ -66,47 +66,43 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _submitResearch() async {
-    try {
-      // 1. create new project
+  try {
+    Project newProj = await StorageServices.createNewProject(
+      _nameController.text,
+    );
 
-      Project newProj = await StorageServices.createNewProject(
-        _nameController.text,
-      );
+    String projId = newProj.id;
 
-      // 2. saving ingesting the document in chroma db
-      String projId = newProj.id;
-      String sourceType = "";
+    Navigator.pop(context); // close dialog first
 
-      if (chosenUrl != null) {
-        sourceType = "url";
-        // var res = await Apiservices.ingestUrl(chosenUrl!, projId);
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => IngestionScreen(
-              project: newProj,
-              sourceType: sourceType,
-              url: chosenUrl!,
-            ),
+    if (chosenUrl != null) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => IngestionScreen(
+            project: newProj,
+            sourceType: "url",
+            url: chosenUrl!,
           ),
-        );
-      } else {
-        sourceType = "file";
-        var res = await Apiservices.ingestFile(chosenPdf!, projId);
-      }
-      // SharedPreferences pref = await SharedPreferences.getInstance();
-      // String userId = pref.getString('userId')!;
-      // context.read<ProjectListProvider>().addNewProject(userId, newProj);
-      Navigator.pop(context);
-
-      // Navigator.push(
-      //   context,
-      //   MaterialPageRoute(builder: (_) => ChatPage(projectId: projId)),
-      // );
-    } catch (e) {
-      debugPrint(e.toString());
+        ),
+      ).then((_) => loadUserAndFetchProject()); // refresh after returning
+    } else {
+      File file = chosenPdf ?? chosenText!;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => IngestionScreen(
+            project: newProj,
+            sourceType: "file",
+            file: file,
+          ),
+        ),
+      ).then((_) => loadUserAndFetchProject()); // refresh after returning
     }
+  } catch (e) {
+    debugPrint(e.toString());
   }
+}
 
   Future<String> getUserId() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();

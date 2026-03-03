@@ -3,8 +3,8 @@ import 'package:flutter/rendering.dart';
 
 class Dioclient {
   
-  // static String url = "http://10.0.2.2:8000";
-  static String url = "https://researcher-ai-rag.onrender.com";
+  static String url = "http://10.0.2.2:8000";
+  // static String url = "https://researcher-ai-rag.onrender.com";
 
   static late final Dio dio;
   static void init() {

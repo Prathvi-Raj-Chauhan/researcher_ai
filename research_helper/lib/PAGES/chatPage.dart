@@ -348,7 +348,7 @@ class _ChatPageState extends State<ChatPage> {
                                           onPressed: _canSubmit()
                                               ? _addDoc
                                               : null,
-                                          child: const Text('Start Research'),
+                                          child: const Text('Add Document'),
                                         ),
                                       ),
                                     ],
@@ -596,8 +596,21 @@ class _ChatPageState extends State<ChatPage> {
         ),
       );
     } else if (chosenPdf != null || chosenText != null) {
-      // TODO: file stream later
+      File file = chosenPdf ?? chosenText!;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => IngestionScreen(
+            project: currProj,
+            sourceType: "file",
+            file: file,
+          ),
+        ),
+      );
     }
+    
+      
+    
   } catch (e) {
     debugPrint(e.toString());
   }

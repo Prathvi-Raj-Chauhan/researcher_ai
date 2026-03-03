@@ -23,8 +23,8 @@ class Apiservices {
     String userId = await getUserId();
     final request = http.Request(
       'POST',
-      // Uri.parse('http://10.0.2.2:8000/ingestUrl/stream'),
-      Uri.parse('https://researcher-ai-rag.onrender.com/ingestUrl/stream'),
+      Uri.parse('http://10.0.2.2:8000/ingestUrl/stream'),
+      // Uri.parse('https://researcher-ai-rag.onrender.com/ingestUrl/stream'),
     );
     request.headers['Content-Type'] = 'application/json';
     request.body = jsonEncode({
@@ -62,8 +62,8 @@ class Apiservices {
     String userId = await getUserId();
     final request = http.Request(
       'POST',
-      // Uri.parse('http://10.0.2.2:8000/ingestUrl/add/stream'),
-      Uri.parse('https://researcher-ai-rag.onrender.com/ingestUrl/add/stream'),
+      Uri.parse('http://10.0.2.2:8000/ingestUrl/add/stream'),
+      // Uri.parse('https://researcher-ai-rag.onrender.com/ingestUrl/add/stream'),
     );
     request.headers['Content-Type'] = 'application/json';
     request.body = jsonEncode({
@@ -101,8 +101,8 @@ class Apiservices {
     String userId = await getUserId();
     final request = http.MultipartRequest(
       'POST',
-      // Uri.parse('http://10.0.2.2:8000/ingest/file/stream'),
-      Uri.parse('https://researcher-ai-rag.onrender.com/ingest/file/stream'),
+      Uri.parse('http://10.0.2.2:8000/ingest/file/stream'),
+      // Uri.parse('https://researcher-ai-rag.onrender.com/ingest/file/stream'),
     );
     request.fields['userId'] = userId;
     request.fields['projectId'] = projectId;
@@ -125,7 +125,7 @@ class Apiservices {
         if (line.startsWith('data: ')) {
           final data = jsonDecode(line.substring(6)); // strips the "data: " prefix (6 characters) leaving just the JSON string.
           yield data;
-          if (data['step'] == 3 || data['step'] == -1) break;
+          if (data['step'] == 4 || data['step'] == -1) break;
         }
       }
     } finally {
