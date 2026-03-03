@@ -14,6 +14,20 @@ Built to be fast, accurate, and hallucination-resistant — every answer is stri
 
 ---
 
+## Little Demo
+Note - These screenshots were taken from the screen recording that from emulator so they are very low quality
+![WhatsApp Image 2026-03-03 at 7 22 21 PM (2)](https://github.com/user-attachments/assets/ab3ecaed-3b0b-4350-a80d-5582557c8e54)![WhatsApp Image 2026-03-03 at 7 22 19 PM](https://github.com/user-attachments/assets/5fd303d7-a551-4778-b780-cf54fe4fef3d)![WhatsApp Image 2026-03-03 at 7 25 14 PM](https://github.com/user-attachments/assets/9695638f-8271-45b2-8d8e-cc673d1212ed)![WhatsApp Image 2026-03-03 at 7 22 21 PM (1)](https://github.com/user-attachments/assets/b1ef8e16-56aa-4966-82ef-ff15637a69c9)
+![WhatsApp Image 2026-03-03 at 7 22 21 PM](https://github.com/user-attachments/assets/537915b4-b61d-4a20-a8c8-48b338292f53)
+![WhatsApp Image 2026-03-03 at 7 22 20 PM](https://github.com/user-attachments/assets/782d2267-68ee-4ebe-8362-353c1dc4fca0)
+
+---
+
+
+
+
+
+
+
 ## ✨ Features
 
 ### 📱 Mobile App (Flutter)
