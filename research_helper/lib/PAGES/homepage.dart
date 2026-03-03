@@ -519,32 +519,57 @@ class _HomePageState extends State<HomePage> {
     context.read<ProjectListProvider>().deleteProject(id);
   }
 
-  void openDeleteDialog(Project currProj) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text("Delete Project"),
-          content: Text('Are you sure want to delete this project ?'),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                onDelete(currProj.id);
-                Navigator.pop(context);
-              },
-              child: Text('Delete'),
+ void openDeleteDialog(Project currProj) {
+  showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        backgroundColor: const Color.fromARGB(255, 49, 49, 49),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Text(
+          "Delete Project",
+          style: TextStyle(color: Colors.white),
+        ),
+        content: Text(
+          'Are you sure you want to delete this project?',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red.shade700,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: Text('Cancel'),
+            onPressed: () {
+              onDelete(currProj.id);
+              Navigator.pop(context);
+            },
+            child: Text('Delete'),
+          ),
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.purpleAccent,
+              side: BorderSide(color: Colors.purpleAccent),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
-          ],
-        );
-      },
-    );
-  }
+            onPressed: () {
+              Navigator.pop(context);
+            },
+            child: Text('Cancel'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   void onRename(String id, String newName) {
     StorageServices.renameProject(id, newName);
@@ -559,33 +584,66 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget renameProject(Project currProj) {
-    _rename.text = currProj.name;
+  _rename.text = currProj.name;
 
-    return AlertDialog(
-      title: Text("Rename Your Project"),
-      content: TextField(
-        controller: _rename,
-        decoration: InputDecoration(
-          hintText: 'Enter new Name',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+  return AlertDialog(
+    backgroundColor: const Color.fromARGB(255, 54, 54, 54),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(16),
+    ),
+    title: Text(
+      "Rename Your Project",
+      style: TextStyle(color: Colors.white),
+    ),
+    content: TextField(
+      controller: _rename,
+      style: TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        hintText: 'Enter new name',
+        hintStyle: TextStyle(color: Colors.white54),
+        filled: true,
+        fillColor: Colors.grey.shade900,
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey, width: 2),
         ),
       ),
-      actions: [
-        ElevatedButton(
-          onPressed: () {
-            if (_rename.text != currProj.name)
-              onRename(currProj.id, _rename.text);
-            Navigator.pop(context);
-          },
-          child: Text('Save'),
+    ),
+    actions: [
+      ElevatedButton(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blueAccent,
+          foregroundColor: Colors.black,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          padding: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         ),
-        ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: Text('Cancel'),
+        onPressed: () {
+          if (_rename.text != currProj.name)
+            onRename(currProj.id, _rename.text);
+          Navigator.pop(context);
+        },
+        child: Text('Save'),
+      ),
+      OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: Colors.white70,
+          side: BorderSide(color: Colors.white30),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
-      ],
-    );
-  }
+        onPressed: () {
+          Navigator.pop(context);
+        },
+        child: Text('Cancel'),
+      ),
+    ],
+  );
+}
 }
