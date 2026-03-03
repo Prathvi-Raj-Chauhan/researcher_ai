@@ -5,30 +5,31 @@ import os
 
 load_dotenv()
 
-client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+_client = None
 
-def summarize_document(userId: str, projectId : str) -> dict:
-    
-    # Step 1 - load the vector store for this session
+def get_client():
+    global _client
+    if _client is None:
+        _client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+    return _client
+
+def summarize_document(userId: str, projectId: str) -> dict:
+
     vectorstore = load_vector_store(userId, projectId)
-    
-    # Step 2 - get a broad sample of chunks to summarize
-    # we use a generic query to pull a wide variety of chunks
+
     results = vectorstore.similarity_search(
         "main topic overview summary introduction conclusion",
         k=10
     )
-    
+
     if not results:
         return {
             "summary": "Could not generate summary, no content found.",
             "session_id": f"{userId}__{projectId}"
         }
-    
-    # Step 3 - combine chunks into one context
+
     context = "\n\n".join([doc.page_content for doc in results])
-    
-    # Step 4 - ask Gemini to summarize
+
     prompt = f"""You are a research assistant. Based on the document excerpts below, write a clear and concise summary.
 
 The summary should:
@@ -42,7 +43,7 @@ Document excerpts:
 
 Summary:"""
 
-    response = client.models.generate_content(
+    response = get_client().models.generate_content(
         model="gemini-2.5-flash",
         contents=prompt
     )
