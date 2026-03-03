@@ -9,4 +9,4 @@ langchain-chroma
 chromadb
 pdfplumber
 trafilatura
-google-generativeai
+google-genai
